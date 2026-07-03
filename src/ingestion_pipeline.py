@@ -1,7 +1,7 @@
 import os
 from langchain_community.document_loaders import TextLoader, DirectoryLoader
 from langchain_text_splitters import CharacterTextSplitter
-from langchain_google_genai import embeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma
 from dotenv import load_dotenv
 
@@ -58,12 +58,34 @@ def split_doc(documents, chunk_size=800, chunk_overlap=50):
     return chunks
 
 
+##convert into vecotors and store into chroma db
+
+
+def create_vector_store(chunks, persist_directory="..db/chroma_db"):
+    """creating persist vector store"""
+    print("creating embeddings and storing in chroma db")
+
+    embedding_model = GoogleGenerativeAIEmbeddings(model="gemini-embedding-001")
+
+    print("creating vector store")
+    vector_store = Chroma.from_documents(
+        documents=chunks,
+        embedding=embedding_model,
+        persist_directory=persist_directory,
+        collection_metadata={"hnsw:space": "cosine"},
+    )
+    print("vector store created")
+    print(f"vector store is created at {persist_directory}")
+    return vector_store
+
+
 def main():
     # load the files
     documents = load_files(doc_path="../docs")
     # chunk the files
     chunk = split_doc(documents)
     # store in chroma db
+    vector_store = create_vector_store(chunk)
 
 
 if __name__ == "__main__":
