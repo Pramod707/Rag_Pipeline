@@ -1,7 +1,8 @@
 import os
 from langchain_community.document_loaders import TextLoader, DirectoryLoader
 from langchain_text_splitters import CharacterTextSplitter
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_ollama import OllamaEmbeddings
+import shutil
 
 # from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
@@ -63,23 +64,41 @@ def split_doc(documents, chunk_size=1000, chunk_overlap=200):
 ##convert into vecotors and store into chroma db
 
 
-def create_vector_store(
-    chunks,
-):
-    """creating persist vector store"""
-    print("creating embeddings and storing in chroma db")
+def create_vector_store(chunks):
+    print("Creating embeddings and vector store...")
 
-    embedding_model = GoogleGenerativeAIEmbeddings(model="gemini-embedding-001")
-    # embedding_model = OpenAIEmbeddings(model="text-embedding-ada-002")
-    print("creating vector store")
-    vector_store = Chroma.from_documents(
-        documents=chunks,
-        embedding=embedding_model,
-        persist_directory="./chroma_db",
+    embedding_model = OllamaEmbeddings(
+        model="nomic-embed-text",
+        base_url="http://127.0.0.1:11434",
+    )
+
+    persist_dir = "./chroma_db"
+
+    # Remove old database (optional while developing)
+    if os.path.exists(persist_dir):
+        shutil.rmtree(persist_dir)
+
+    vector_store = Chroma(
+        collection_name="rag_collection",
+        embedding_function=embedding_model,
+        persist_directory=persist_dir,
         collection_metadata={"hnsw:space": "cosine"},
     )
-    print("vector store created")
-    print(f"vector store is created at {vector_store.persist_directory}")
+
+    batch_size = 50
+
+    for i in range(0, len(chunks), batch_size):
+        batch = chunks[i : i + batch_size]
+
+        print(
+            f"Adding batch {i // batch_size + 1} "
+            f"({i} -> {min(i + batch_size, len(chunks))})"
+        )
+
+        vector_store.add_documents(batch)
+
+    print("Vector store created successfully!")
+
     return vector_store
 
 

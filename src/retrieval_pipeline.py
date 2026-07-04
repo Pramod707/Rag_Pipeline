@@ -1,14 +1,18 @@
 from langchain_chroma import Chroma
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_ollama import OllamaEmbeddings
+
 from dotenv import load_dotenv
 
 load_dotenv()
 
 persistent_directory = "./chroma_db"
 
-embedding_model = GoogleGenerativeAIEmbeddings(model="gemini-embedding-001")
+embedding_model = OllamaEmbeddings(
+    model="nomic-embed-text", base_url="http://127.0.0.1:11434"
+)
 
 db = Chroma(
+    collection_name="rag_collection",
     embedding_function=embedding_model,
     persist_directory=persistent_directory,
     collection_metadata={"hnsw:space": "cosine"},
