@@ -2,6 +2,8 @@ import os
 from langchain_community.document_loaders import TextLoader, DirectoryLoader
 from langchain_text_splitters import CharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
+
+# from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
 from dotenv import load_dotenv
 
@@ -35,7 +37,7 @@ def load_files(doc_path="docs"):
 
 
 ##chunking function
-def split_doc(documents, chunk_size=800, chunk_overlap=50):
+def split_doc(documents, chunk_size=1000, chunk_overlap=200):
     """ "split the doc into smaller chunks"""
     text_splitter = CharacterTextSplitter(
         chunk_size=chunk_size,
@@ -61,21 +63,23 @@ def split_doc(documents, chunk_size=800, chunk_overlap=50):
 ##convert into vecotors and store into chroma db
 
 
-def create_vector_store(chunks, persist_directory="..db/chroma_db"):
+def create_vector_store(
+    chunks,
+):
     """creating persist vector store"""
     print("creating embeddings and storing in chroma db")
 
     embedding_model = GoogleGenerativeAIEmbeddings(model="gemini-embedding-001")
-
+    # embedding_model = OpenAIEmbeddings(model="text-embedding-ada-002")
     print("creating vector store")
     vector_store = Chroma.from_documents(
         documents=chunks,
         embedding=embedding_model,
-        persist_directory=persist_directory,
+        persist_directory="./chroma_db",
         collection_metadata={"hnsw:space": "cosine"},
     )
     print("vector store created")
-    print(f"vector store is created at {persist_directory}")
+    print(f"vector store is created at {vector_store.persist_directory}")
     return vector_store
 
 
