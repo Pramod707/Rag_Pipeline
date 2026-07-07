@@ -7,11 +7,13 @@ embeddings = OllamaEmbeddings(
 )
 ##loading the vector database
 vector_db = Chroma(embedding_function=embeddings, persist_directory="db")
-##user input
+##user input and converting user query into vectors
 query = input("enter the query :")
+embedd_vector = embeddings.embed_query(query)
 
-res = vector_db.similarity_search(query, k=5)
-
+## converting the user query into vectors and retrieving the top 5 chunks
+res = vector_db.similarity_search_by_vector(embedd_vector, k=5)
+##generating the results
 for i, doc in enumerate(res, 1):
     print("=" * 50)
     print(f"result{i}")
