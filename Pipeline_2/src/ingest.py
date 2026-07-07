@@ -32,12 +32,10 @@ embeddings = OllamaEmbeddings(
 )
 
 ##create vector database
-vector_store = Chroma.from_documents(
-    documents=chunks, embedding=embeddings, persist_directory="db"
-)
-# batch_size = 100
-# for i in range(0, len(chunks), batch_size):
-#     batch = chunks[i : i + batch_size]
-#     vector_store.add_documents(batch)
+vector_store = Chroma(persist_directory="db", embedding_function=embeddings)
+batch_size = 100
+for i in range(0, len(chunks), batch_size):
+    batch = chunks[i : i + batch_size]
+    vector_store.add_documents(batch)
 
 print("embedding stored successfully")
