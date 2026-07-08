@@ -12,21 +12,26 @@ llm = ChatOllama(
     model="qwen2.5:7b",
     temperature=0.1,
 )
-query = input("enter the query : ")
-embed_query = embeddings.embed_query(query)
-docs = vector_db.similarity_search_by_vector(embedding=embed_query, k=3)
 
-context = "\n\n".join(doc.page_content for doc in docs)
+while True:
+    query = input("enter the query : ")
+    if query == "exit":
+        break
+    else:
+        embed_query = embeddings.embed_query(query)
+        docs = vector_db.similarity_search_by_vector(embedding=embed_query, k=3)
 
-prompt = f"""
-Answer the question using only  the context Below.
+        context = "\n\n".join(doc.page_content for doc in docs)
 
-Context:
-{context}
+        prompt = f"""
+            Answer the question using only  the context Below.
 
-question:
-{query}
-"""
-response = llm.invoke(prompt)
+            Context:
+            {context}
 
-print(response)
+            question:
+            {query}
+            """
+        response = llm.invoke(prompt)
+
+        print(response.content)
