@@ -1,6 +1,8 @@
 from langchain_chroma import Chroma
 from langchain_ollama import OllamaEmbeddings, ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
 
 embeddings = OllamaEmbeddings(model="nomic-embed-text")
 
@@ -19,10 +21,15 @@ while True:
     if query == "exit":
         break
     else:
-        embed_query = embeddings.embed_query(query)
-        docs = vector_db.similarity_search_by_vector(embedding=embed_query, k=3)
+        #embed_query = embeddings.embed_query(query)
+        # docs = vector_db.similarity_search_by_vector(embedding=embed_query, k=3)
+        retriever = vector_db.as_retriever(search_kwargs={"k": 3})
+        # docs = retriever.invoke(query)
+        # print(docs)
 
-        context = "\n\n".join(doc.page_content for doc in docs)
+        def get_context(docs):
+            context = "\n\n".join(doc.page_content for doc in docs)
+            return context
 
         # prompt = f"""
         #     Answer the question using only  the context Below.
@@ -43,6 +50,15 @@ while True:
             
             """
         )
-        response = llm.invoke(prompt)
+        chain = (
+            {
+                "context": retriever | get_context,
+                "question": RunnablePassthrough(),
+            }
+            | prompt
+            | llm
+            | StrOutputParser()
+        )
+        response = chain.invoke(query)
 
-        print(response.content)
+        print(response)
