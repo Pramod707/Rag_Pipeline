@@ -1,5 +1,6 @@
 from langchain_chroma import Chroma
 from langchain_ollama import OllamaEmbeddings, ChatOllama
+from langchain_core.prompts import ChatPromptTemplate
 
 embeddings = OllamaEmbeddings(model="nomic-embed-text")
 
@@ -23,15 +24,25 @@ while True:
 
         context = "\n\n".join(doc.page_content for doc in docs)
 
-        prompt = f"""
-            Answer the question using only  the context Below.
+        # prompt = f"""
+        #     Answer the question using only  the context Below.
 
-            Context:
-            {context}
+        #     Context:
+        #     {context}
 
-            question:
-            {query}
+        #     question:
+        #     {query}
+        #     """
+        prompt = ChatPromptTemplate.from_template(
             """
+            You are a helpful Ai assistant
+            Answer the questions only from given context below
+            If the Answer is not present. say  : "I dont know !!"
+            context: {context}
+            question:{question} 
+            
+            """
+        )
         response = llm.invoke(prompt)
 
         print(response.content)
